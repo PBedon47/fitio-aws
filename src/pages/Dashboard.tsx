@@ -56,19 +56,33 @@ const [perfil, setPerfil] = useState({
 
   // CARGA INICIAL
   useEffect(() => {
-    const user = localStorage.getItem("usuarioNombre");
-    if (user) setNombre(user);
+  const savedConfig = localStorage.getItem("configUser");
 
-    const saved = localStorage.getItem("progresoPeso");
-    if (saved) setData(JSON.parse(saved) || []);
+  if (savedConfig) {
+    const data = JSON.parse(savedConfig);
+    setPerfil((prev) => ({
+      ...prev,
+      ...data
+    }));
+  }
 
-    const savedConfig = localStorage.getItem("configUser");
-    if (savedConfig) {
-      const data = JSON.parse(savedConfig);
-      setPerfil(data);
-      setNombre(data.nombre);
-    }
-  }, []);
+  const user = localStorage.getItem("usuarioNombre") || "";
+  const email = localStorage.getItem("usuarioEmail");
+
+  if (user || email) {
+    setNombre(user);
+
+    setPerfil((prev) => ({
+      ...prev,
+      nombre: user || prev.nombre,
+      email: email || prev.email
+    }));
+  }
+
+  const saved = localStorage.getItem("progresoPeso");
+  if (saved) setData(JSON.parse(saved) || []);
+
+}, []);
 
   // TIPOS DEPORTE
   const obtenerTipo = (dep) => {
@@ -270,8 +284,13 @@ const calcularProgreso = () => {
 
   {/* INFO */}
   <div className="flex-1">
+
+    <p className="text-xs text-slate-500 uppercase tracking-widest">
+        Usuario
+    </p>
+
     <h2 className="text-xl font-bold text-white">
-      {perfil.nombre || "Usuario"}
+      {[perfil.nombre, perfil.apellido].filter(Boolean).join(" ") || "Usuario"}
     </h2>
 
     <p className="text-slate-400 text-sm">

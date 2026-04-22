@@ -4,6 +4,7 @@ import fondo from "../assets/regis.jpg"; // usa tu imagen
 
 function Register() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -20,17 +21,50 @@ function Register() {
     }));
   };
 
-  const handleRegister = (e) => {
-    e.preventDefault();
+  const handleRegister = async (e) => {
+  e.preventDefault();
 
-    if (!formData.acceptTerms) {
-      alert("Debes aceptar los términos");
-      return;
+  if (!formData.name || !formData.email || !formData.password) {
+    alert("Completa todos los campos");
+    return;
+  }
+
+  if (!formData.acceptTerms) {
+    alert("Debes aceptar los términos");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const res = await fetch("http://localhost:3000/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: formData.name.trim(),   // 🔥 IMPORTANTE
+        email: formData.email.trim(),
+        password: formData.password.trim(),
+      }),
+    });
+
+    const data = await res.json();
+
+    if (res.status === 201) {
+      alert("Usuario registrado correctamente");
+      navigate("/"); // vuelve al login
+    } else {
+      alert(data.message || "Error al registrar");
     }
-
-    alert("Usuario registrado");
-    navigate("/");
-  };
+  } catch (error) {
+    console.error(error);
+    alert("No se pudo conectar al servidor");
+  }
+  finally {
+  setLoading(false);
+}
+};
 
   return (
     <div
@@ -92,11 +126,12 @@ function Register() {
           </div>
 
           <button
-            type="submit"
-            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white p-3 rounded-lg transition shadow-lg shadow-emerald-500/30"
-          >
-            Crear cuenta
-          </button>
+          type="submit"
+          disabled={loading}
+          className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white p-3 rounded-lg transition"
+        >
+          {loading ? "Creando cuenta..." : "Crear cuenta"}
+        </button>
         </form>
 
         <p className="text-sm text-white/70 text-center mt-6">

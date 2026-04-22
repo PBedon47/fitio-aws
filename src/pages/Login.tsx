@@ -9,15 +9,65 @@ import { FaFacebookF, FaTwitter, FaInstagram, FaYoutube } from "react-icons/fa";
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    if (email && password) {
-      navigate("/dashboard");
-    } else {
-      alert("Completa los campos");
+  const handleLogin = async () => {
+  if (!email.trim() || !password.trim()) {
+    alert("Completa todos los campos");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const res = await fetch("http://localhost:3000/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+        password: password.trim(),
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Error de login");
+      return;
     }
-  };
+
+    // ✅ EXTRAER NOMBRE DE FORMA SEGURA (IMPORTANTE)
+    const nombre =
+      data?.nombre ||
+      data?.user?.nombre ||
+      data?.usuario?.nombre ||
+      data?.name;
+
+    if (!nombre) {
+      console.error("RESPUESTA BACKEND:", data);
+      alert("El backend no devolvió el nombre del usuario");
+      return;
+    }
+
+    // ✅ GUARDAR SEGURO
+    localStorage.setItem("userId", data.id || "");
+    localStorage.setItem("usuarioNombre", nombre);
+    localStorage.setItem("usuarioEmail", data.email || "");
+
+    navigate("/dashboard");
+
+  } catch (error) {
+    console.error(error);
+    alert("No se pudo conectar al servidor");
+  } finally {
+    setLoading(false);
+    setEmail("");
+    setPassword("");
+  }
+};
 
   return (
     <div
@@ -76,19 +126,21 @@ function Login() {
 
             {/* EMAIL */}
             <input
-              type="email"
-              placeholder="Email Address"
-              className="w-full bg-slate-600/60 border border-slate-500 text-white p-3 mb-4 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              onChange={(e) => setEmail(e.target.value)}
-            />
+            type="email"
+            placeholder="Email Address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full bg-slate-600/60 border border-slate-500 text-white p-3 mb-4 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
 
             {/* PASSWORD */}
             <input
-              type="password"
-              placeholder="Password"
-              className="w-full bg-slate-600/60 border border-slate-500 text-white p-3 mb-4 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full bg-slate-600/60 border border-slate-500 text-white p-3 mb-4 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
 
             {/* CHECKBOX */}
             <div className="flex items-center mb-4 text-sm text-white/80">
@@ -99,9 +151,10 @@ function Login() {
             {/* BOTÓN */}
             <button
               onClick={handleLogin}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white p-3 rounded-lg transition shadow-lg shadow-emerald-500/30"
+              disabled={loading}
+              className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white p-3 rounded-lg transition shadow-lg shadow-emerald-500/30"
             >
-              ¡Empezar ahora!
+              {loading ? "Cargando..." : "¡Empezar ahora!"}
             </button>
 
             {/* LINKS */}
