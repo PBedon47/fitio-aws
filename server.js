@@ -9,7 +9,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// rutas
+app.get("/", (req, res) => {
+  res.send("API FITIO funcionando 🚀");
+});
+
 app.use("/", authRoutes);
 app.use("/", progresoRoutes);
 
